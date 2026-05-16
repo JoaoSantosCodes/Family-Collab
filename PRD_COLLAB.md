@@ -1,29 +1,23 @@
-# PRD — Family Collab (Harmony Hub)
+# PRD: Family Collab (Harmony Hub)
 
-## 🎯 Visão do Produto
-O hub central de colaboração doméstica, garantindo que toda a família esteja em sintonia sem esforço.
+## 🎯 Objetivo
+Sincronização doméstica impecável e gamificação das tarefas do lar.
 
----
+## 🚀 Status do Projeto
+- **Fase Atual:** Estágio de Maturidade ✅
+- **Última Atualização:** Implementação do **Harmony XP**.
 
-## 🚀 POC 3: Real-time Family Board
-**Objetivo:** Sincronização sem fricção e intuitividade.
+## 🛠️ Funcionalidades Implementadas
 
-### Funcionalidades:
-- [ ] **Family Switcher:** Alternar entre diferentes "Casas" ou grupos.
-- [ ] **Smart Shopping Suggestions:** IA que explica o porquê da sugestão (ex: "Acabou faz 5 dias").
-- [ ] **Haptic Feedback:** Confirmação física ao marcar itens como comprados.
+### POC 3: Real-time List
+- [x] Sincronização via Supabase Realtime.
+- [x] AI Smart Suggestions baseadas em recorrência.
 
----
+### GMUD 4: Family Gamification
+- [x] Sistema de **Harmony XP** (+15 XP por tarefa).
+- [x] Progressão de Nível Familiar (Leveling System).
+- [x] Animações de celebração (Confetti) e feedback háptico.
 
-## 📦 GMUD 3: Conectividade Total
-**Mudanças Planejadas:**
-- Implementar **Shared Boards** para tarefas recorrentes da casa.
-- Notificações Push inteligentes (ex: "Alguém entrou no mercado, deseja adicionar algo?").
-- Histórico de preços e economia familiar.
-
----
-
-## 🛠️ Requisitos Técnicos
-- **Frontend:** Vite + React + Supabase Realtime.
-- **Styling:** Tailwind CSS (Estética Clean/Warm).
-- **Social:** Supabase Auth + Family Groups.
+## 📅 Próximos Passos (Backlog)
+- [ ] Quadro de avisos (Sticky Notes) compartilhado.
+- [ ] Mural de fotos da família no hub.
