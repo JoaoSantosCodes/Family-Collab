@@ -18,6 +18,7 @@ import {
 import { supabase } from '@/lib/supabase';
 import { getSmartSuggestions, Suggestion } from '@/lib/shoppingEngine';
 import { triggerHaptic } from '@/lib/haptics';
+import confetti from 'canvas-confetti';
 
 interface ShoppingItem {
   id: string;
@@ -35,6 +36,7 @@ export default function App() {
   const [selectedCategory, setSelectedCategory] = useState('Geral');
   const [user, setUser] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [harmonyPoints, setHarmonyPoints] = useState(0);
 
   const categories = [
     { name: 'Hortifruti', icon: Apple, color: 'text-green-400' },
@@ -45,6 +47,9 @@ export default function App() {
   ];
 
   useEffect(() => {
+    const savedPoints = localStorage.getItem('harmony_points');
+    if (savedPoints) setHarmonyPoints(parseInt(savedPoints));
+
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session?.user) {
         setUser(session.user);
@@ -86,6 +91,17 @@ export default function App() {
     if (!item) return;
     const { error } = await supabase.from('shopping_list').update({ completed: !item.completed }).eq('id', id);
     if (!error) {
+      if (!item.completed) {
+        const newPoints = harmonyPoints + 15;
+        setHarmonyPoints(newPoints);
+        localStorage.setItem('harmony_points', newPoints.toString());
+        confetti({
+          particleCount: 100,
+          spread: 70,
+          origin: { y: 0.6 },
+          colors: ['#D4AF37', '#ffffff', '#000000']
+        });
+      }
       setItems(prev => prev.map(i => i.id === id ? { ...i, completed: !i.completed } : i));
       triggerHaptic(!item.completed ? 'success' : 'light');
     }
@@ -98,6 +114,9 @@ export default function App() {
 
   if (isLoading) return <div className="min-h-screen bg-background flex items-center justify-center"><Loader2 className="text-gold animate-spin" size={40} /></div>;
 
+  const familyLevel = Math.floor(harmonyPoints / 100) + 1;
+  const progressToNextLevel = harmonyPoints % 100;
+
   return (
     <div className="min-h-screen bg-background text-text flex flex-col font-sans">
       <header className="h-20 flex items-center justify-between px-6 border-b border-border-custom bg-background/50 backdrop-blur-xl sticky top-0 z-40">
@@ -109,6 +128,21 @@ export default function App() {
             <p className="text-[9px] font-black uppercase tracking-widest text-gold mb-1">Casa Principal</p>
             <h1 className="text-lg font-serif font-bold tracking-tight flex items-center gap-2">Harmony <span className="text-gold">Hub</span> <ChevronDown size={14} className="text-text-dim" /></h1>
           </div>
+        </div>
+
+        <div className="flex flex-col items-end">
+          <div className="flex items-center gap-2">
+            <Sparkles size={14} className="text-gold" />
+            <span className="text-xs font-black text-text tabular-nums">{harmonyPoints} <span className="text-text-dim font-bold">XP</span></span>
+          </div>
+          <div className="w-24 h-1.5 bg-surface-2 rounded-full mt-1 border border-white/5 overflow-hidden">
+            <motion.div 
+              initial={{ width: 0 }}
+              animate={{ width: `${progressToNextLevel}%` }}
+              className="h-full bg-gold shadow-[0_0_10px_rgba(212,175,55,0.5)]"
+            />
+          </div>
+          <span className="text-[8px] font-bold uppercase tracking-widest text-text-dim mt-1">Lvl {familyLevel} Family</span>
         </div>
       </header>
 
