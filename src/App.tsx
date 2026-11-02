@@ -19,6 +19,7 @@ import { supabase } from '@/lib/supabase';
 import { getSmartSuggestions, Suggestion } from '@/lib/shoppingEngine';
 import { triggerHaptic } from '@/lib/haptics';
 import confetti from 'canvas-confetti';
+import type { RealtimeChannel, User } from '@supabase/supabase-js';
 
 interface ShoppingItem {
   id: string;
@@ -34,9 +35,12 @@ export default function App() {
   const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
   const [newItemName, setNewItemName] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('Geral');
-  const [user, setUser] = useState<any>(null);
+  const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [harmonyPoints, setHarmonyPoints] = useState(0);
+  const [harmonyPoints, setHarmonyPoints] = useState(() => {
+    const savedPoints = localStorage.getItem('harmony_points');
+    return savedPoints ? parseInt(savedPoints) : 0;
+  });
 
   const categories = [
     { name: 'Hortifruti', icon: Apple, color: 'text-green-400' },
@@ -47,31 +51,37 @@ export default function App() {
   ];
 
   useEffect(() => {
-    const savedPoints = localStorage.getItem('harmony_points');
-    if (savedPoints) setHarmonyPoints(parseInt(savedPoints));
+    let active = true;
+    let channel: RealtimeChannel | null = null;
+
+    const fetchItems = async (userId: string) => {
+      const { data } = await supabase.from('shopping_list').select('*').eq('user_id', userId).order('created_at', { ascending: false });
+      if (data && active) setItems(data);
+    };
 
     supabase.auth.getSession().then(({ data: { session } }) => {
+      if (!active) return;
       if (session?.user) {
+        const userId = session.user.id;
         setUser(session.user);
-        fetchItems(session.user.id).finally(() => setIsLoading(false));
-        getSmartSuggestions(session.user.id).then(setSuggestions);
-        
-        const channel = supabase
+        fetchItems(userId).finally(() => setIsLoading(false));
+        getSmartSuggestions(userId).then(setSuggestions);
+
+        channel = supabase
           .channel('shopping_realtime')
           .on('postgres_changes', { event: '*', schema: 'public', table: 'shopping_list' }, () => {
-            fetchItems(session.user.id);
+            fetchItems(userId);
           })
           .subscribe();
-
-        return () => { supabase.removeChannel(channel); };
       } else { setIsLoading(false); }
     });
-  }, []);
 
-  const fetchItems = async (userId: string) => {
-    const { data } = await supabase.from('shopping_list').select('*').eq('user_id', userId).order('created_at', { ascending: false });
-    if (data) setItems(data);
-  };
+    // A limpeza fica no retorno do efeito: antes ela era devolvida dentro do .then e o canal nunca era removido.
+    return () => {
+      active = false;
+      if (channel) supabase.removeChannel(channel);
+    };
+  }, []);
 
   const addItem = async (override?: { name: string, category: string }) => {
     const name = override?.name || newItemName;
